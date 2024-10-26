@@ -2,9 +2,9 @@ export interface WebsocketMessage {
   type: string;
   data: any;
   id?: number;
-  index?: number | string,
-  error?: boolean,
-  errorText?: string
+  index?: number | string;
+  error?: boolean;
+  errorText?: string;
 }
 
 export interface Player {
