@@ -1,7 +1,10 @@
 export interface WebsocketMessage {
   type: string;
   data: any;
-  id: number
+  id?: number;
+  index?: number | string,
+  error?: boolean,
+  errorText?: string
 }
 
 export interface Player {
@@ -9,6 +12,13 @@ export interface Player {
   name: string;
   password: string;
   wins: number;
+}
+
+export interface RegistrationResponseData {
+  name: string;
+  index: string;
+  error: boolean;
+  errorText: string;
 }
 
 export interface Room {

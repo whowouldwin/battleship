@@ -1,5 +1,5 @@
-import { Player, WebsocketMessage } from './types/types.js';
-import { generateId } from './utils/generateId.js';
+import { Player, WebsocketMessage } from '../types/types.js';
+import { generateId } from '../utils/generateId.js';
 
 const playerDB: Record<string, Player> = {};
 
@@ -37,7 +37,7 @@ export function handleRegistration(name: string, password: string): WebsocketMes
     return createErrorResponse(name, "Invalid password");
   } else {
     const playerId = generateId();
-    playerDB[name] = { id: playerId, name: name, password, wins: 0 };
+    playerDB[name] = { id: playerId, name, password, wins: 0 };
     return createSuccessResponse(name, playerId);
   }
 }
