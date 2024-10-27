@@ -1,87 +1,59 @@
-import { generateId } from '../utils/generateId.js';
-import { Player, Room, WebsocketMessage } from '../types/types.js';
+import { WebSocket } from "ws";
+import { rooms, availableRooms } from "../db/gameStore.ts";
+import { generateId } from "../utils/generateId.ts";
+import { WebsocketMessage, Room, Player } from "../types/types.ts";
+import { updateRoomList } from "../utils/rooms.ts";
 
-const rooms: Record<string, Room> = {};
-const availableRooms: string[] = [];
+export function handleRoomMessage(ws: WebSocket, message: WebsocketMessage) {
+  const data = message.data ? JSON.parse(message.data) : {};
 
-export function createRoom(player: Player) {
-  const roomId = generateId();
-  rooms[roomId] = { id: roomId, players: [player], gameStarted: false };
-  availableRooms.push(roomId);
+  if (message.type === "create_room") {
+    const roomId = generateId();
+    const playerName = data.name || "Unknown Player";
+    const playerId = generateId();
 
-  return JSON.parse(JSON.stringify({
-    type: 'create_room',
-    data: JSON.stringify(''),
-    id: 0,
-  }));
-}
+    const newPlayer: Player = { id: playerId, name: playerName, password: "", wins: 0, ws };
+    const newRoom: Room = { id: roomId, players: [newPlayer], gameStarted: false };
 
-export function addUserToRoom(indexRoom: string, player: Player): WebsocketMessage[] {
-  const room = rooms[indexRoom];
+    rooms[roomId] = newRoom;
+    availableRooms.push(roomId);
 
-  if (!room) {
-    return [
-      JSON.parse(JSON.stringify({
-        type: 'error',
-        data: JSON.stringify({
-          error: true,
-          errorText: `Room ${indexRoom} doesn't exist`,
-        }),
-        id: 0,
-      })),
-    ];
-  }
+    const response = {
+      type: "create_room",
+      data: JSON.stringify({ roomId, roomUsers: [{ name: playerName, index: playerId }] }),
+      id: 0,
+    };
+    ws.send(JSON.stringify(response));
 
-  if (room && room.players.length === 1) {
-    room.players.push(player);
+    updateRoomList();
+  } else if (message.type === "add_user_to_room") {
+    const roomId = data.indexRoom;
+    const room = rooms[roomId];
 
-    const roomIndex = availableRooms.indexOf(indexRoom);
-    if (roomIndex > -1) {
-      availableRooms.splice(roomIndex, 1);
-    }
+    if (room && room.players.length === 1) {
+      const playerName = data.name || "Unknown Player";
+      const playerId = generateId();
 
-    const idGame = generateId();
-    const player1Id = generateId();
-    const player2Id = generateId();
+      const newPlayer: Player = { id: playerId, name: playerName, password: "", wins: 0, ws };
+      room.players.push(newPlayer);
 
-    return [
-      JSON.parse(JSON.stringify({
-        type: 'create_room',
-        data: JSON.stringify({
-          idGame, idPlayer: player1Id,
-        }),
-        id: 0,
-        error: false,
-        errorText: '',
-      })),
-      JSON.parse(JSON.stringify({
-        type: 'create_game',
-        data: JSON.stringify({
-          idGame, idPlayer: player2Id,
-        }),
-        id: 0,
-        error: false,
-        errorText: '',
-      })),
-    ];
-  } else {
-    throw new Error(`Room is full or doesn't exist ${indexRoom}`);
-  }
-}
+      availableRooms.splice(availableRooms.indexOf(roomId), 1);
 
-export function updateRoomState(): WebsocketMessage {
-  return JSON.parse(JSON.stringify({
-    type: 'update_room',
-    data: JSON.stringify(
-      availableRooms.map((roomId) => {
-        const room = rooms[roomId];
-        return {
-          roomId: room.id,
-          roomUsers: room.players.map(({ name, id }) => ({ name, index: id })),
+      room.players.forEach((player) => {
+        const joinMessage = {
+          type: "create_game",
+          data: JSON.stringify({ idGame: room.id, idPlayer: player.id }),
+          id: 0,
         };
-      }),
-    ),
-    id: 0,
-  }));
+        player.ws.send(JSON.stringify(joinMessage));
+      });
+    } else {
+      const errorResponse = {
+        type: "error",
+        data: JSON.stringify({ error: true, errorText: "Room full or not found" }),
+        id: 0,
+      };
+      ws.send(JSON.stringify(errorResponse));
+    }
+  }
 }
-

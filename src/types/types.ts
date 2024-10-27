@@ -1,10 +1,9 @@
+import { WebSocket } from "ws";
+
 export interface WebsocketMessage {
   type: string;
-  data: any;
-  id?: number;
-  index?: number | string;
-  error?: boolean;
-  errorText?: string;
+  data: string;
+  id: number;
 }
 
 export interface Player {
@@ -12,17 +11,19 @@ export interface Player {
   name: string;
   password: string;
   wins: number;
-}
-
-export interface RegistrationResponseData {
-  name: string;
-  index: string;
-  error: boolean;
-  errorText: string;
+  ws: WebSocket;
+  ships?: Ship[];
 }
 
 export interface Room {
   id: string;
   players: Player[];
   gameStarted: boolean;
+}
+
+export interface Ship {
+  position: { x: number; y: number };
+  direction: boolean;
+  length: number;
+  type: "small" | "medium" | "large" | "huge";
 }
