@@ -4,7 +4,8 @@ import { generateId } from "../utils/generateId.ts";
 import { WebsocketMessage, Player } from "../types/types.ts";
 
 export function handlePlayerMessage(ws: WebSocket, message: WebsocketMessage) {
-  const data = JSON.parse(message.data);
+  const rawData = message.data === "string" ? JSON.parse(message.data) : message.data;
+  const data = typeof rawData === "string" ? JSON.parse(rawData) : rawData;
   const { name, password } = data;
   let response;
 
