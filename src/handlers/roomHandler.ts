@@ -3,16 +3,21 @@ import { rooms, availableRooms } from "../db/gameStore.ts";
 import { generateId } from "../utils/generateId.ts";
 import { WebsocketMessage, Room, Player } from "../types/types.ts";
 import { updateRoomList } from "../utils/rooms.ts";
+import { players } from '../db/playerStore.ts';
 
 export function handleRoomMessage(ws: WebSocket, message: WebsocketMessage) {
   const data = message.data ? JSON.parse(message.data) : {};
+  const { name, password } = data;
+
+  const existingPlayer = Array.from(players.values()).find((p) => p.ws === ws || p.name === name);
 
   if (message.type === "create_room") {
     const roomId = generateId();
-    const playerName = data.name || "Unknown Player";
-    const playerId = generateId();
+    const playerName = existingPlayer ? existingPlayer.name : "Unknown Player";
+    const playerPassword = existingPlayer ? existingPlayer.password : password || "";
+    const playerId = existingPlayer ? existingPlayer.id : generateId();
 
-    const newPlayer: Player = { id: playerId, name: playerName, password: "", wins: 0, ws };
+    const newPlayer: Player = { id: playerId, name: playerName, password: playerPassword, wins: 0, ws };
     const newRoom: Room = { id: roomId, players: [newPlayer], gameStarted: false };
 
     rooms[roomId] = newRoom;
@@ -31,10 +36,11 @@ export function handleRoomMessage(ws: WebSocket, message: WebsocketMessage) {
     const room = rooms[roomId];
 
     if (room && room.players.length === 1) {
-      const playerName = data.name || "Unknown Player";
-      const playerId = generateId();
+      const playerName = existingPlayer ? existingPlayer.name : "Unknown Player";
+      const playerPassword = existingPlayer ? existingPlayer.password : password || "";
+      const playerId = existingPlayer ? existingPlayer.id : generateId();
 
-      const newPlayer: Player = { id: playerId, name: playerName, password: "", wins: 0, ws };
+      const newPlayer: Player = { id: playerId, name: playerName, password: playerPassword, wins: 0, ws };
       room.players.push(newPlayer);
 
       availableRooms.splice(availableRooms.indexOf(roomId), 1);
