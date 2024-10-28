@@ -19,6 +19,7 @@ export interface Room {
   id: string;
   players: Player[];
   gameStarted: boolean;
+  currentTurnPlayerId?: string;
 }
 
 export interface Ship {

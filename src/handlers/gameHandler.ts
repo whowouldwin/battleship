@@ -1,6 +1,6 @@
 import { WebSocket, WebSocketServer } from "ws";
 import { rooms } from "../db/gameStore.ts";
-import { WebsocketMessage, Room } from "../types/types.ts";
+import { WebsocketMessage } from "../types/types.ts";
 import { handleAttack, startGame } from '../utils/rooms.ts';
 
 export function handleGameMessage(ws: WebSocket, message: WebsocketMessage, wss: WebSocketServer) {
@@ -12,7 +12,7 @@ export function handleGameMessage(ws: WebSocket, message: WebsocketMessage, wss:
 
     if (player) {
       player.ships = data.ships;
-      if (game.players.every((p) => p.ships)) {
+      if (game.players.every((p) => p.ships) && !game.gameStarted) {
         startGame(game);
       }
     }
@@ -20,6 +20,6 @@ export function handleGameMessage(ws: WebSocket, message: WebsocketMessage, wss:
   }
   else if (message.type === "attack") {
     const { gameId, indexPlayer, x, y } = data;
-    handleAttack(ws, gameId, indexPlayer, x, y, wss); // Process the attack
+    handleAttack(ws, gameId, indexPlayer, x, y, wss);
   }
 }

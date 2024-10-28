@@ -5,14 +5,16 @@ import { players } from '../db/playerStore.js';
 import { updateWinnersList } from '../handlers/updateWinnersList.js';
 
 export function startGame(game: Room) {
+  if(game.gameStarted) return;
   game.gameStarted = true;
+  game.currentTurnPlayerId = game.players[0].id
 
   game.players.forEach((player) => {
     player.ws.send(JSON.stringify({
       type: "start_game",
       data: JSON.stringify({
         ships: player.ships,
-        currentPlayerIndex: game.players[0].id,
+        currentPlayerIndex: game.currentTurnPlayerId,
       }),
       id: 0,
     }));
@@ -28,7 +30,7 @@ export function handleAttack(
   wss: WebSocketServer
 ) {
   const game = rooms[gameId];
-  if (!game) return;
+  if (!game || !game.gameStarted) return;
 
   const currentPlayer = game.players.find((p) => p.id === playerId);
   const opponent = game.players.find((p) => p.id !== playerId);
@@ -56,14 +58,18 @@ export function handleAttack(
   opponent.ws.send(JSON.stringify(attackResponse));
 
 
-  const turnMessage: WebsocketMessage = {
-    type: "turn",
-    data: JSON.stringify({ currentPlayer: opponent.id }),
-    id: 0,
-  };
+  if (attackStatus === "miss" || attackStatus === "hit") {
+    game.currentTurnPlayerId = opponent.id;
 
-  ws.send(JSON.stringify(turnMessage));
-  opponent.ws.send(JSON.stringify(turnMessage));
+    const turnMessage: WebsocketMessage = {
+      type: "turn",
+      data: JSON.stringify({ currentPlayer: opponent.id }),
+      id: 0,
+    };
+
+    ws.send(JSON.stringify(turnMessage));
+    opponent.ws.send(JSON.stringify(turnMessage));
+  }
 
 }
 export function updateRoomList(wss: WebSocketServer) {
