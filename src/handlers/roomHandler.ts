@@ -12,6 +12,14 @@ export function handleRoomMessage(ws: WebSocket, message: WebsocketMessage) {
   const existingPlayer = Array.from(players.values()).find((p) => p.ws === ws || p.name === name);
 
   if (message.type === "create_room") {
+    const playerInRoom = Object.entries(rooms).find(([_, room]) =>
+      room.players.some((p) => p.id === existingPlayer?.id)
+    );
+    if (playerInRoom) {
+      console.error("Player is already in a room");
+      ws.send(JSON.stringify({ type: "error", data: JSON.stringify({ error: true, errorText: "Player already in a room" }), id: 0 }));
+      return;
+    }
     const roomId = generateId();
     const playerName = existingPlayer ? existingPlayer.name : "Unknown Player";
     const playerPassword = existingPlayer ? existingPlayer.password : password || "";
@@ -25,7 +33,7 @@ export function handleRoomMessage(ws: WebSocket, message: WebsocketMessage) {
 
     const response = {
       type: "create_room",
-      data: JSON.stringify({ roomId, roomUsers: [{ name: playerName, index: playerId }] }),
+      data: JSON.stringify({ roomId: roomId, roomUsers: [{ name: playerName, index: playerId }] }),
       id: 0,
     };
     ws.send(JSON.stringify(response));
@@ -53,6 +61,7 @@ export function handleRoomMessage(ws: WebSocket, message: WebsocketMessage) {
         };
         player.ws.send(JSON.stringify(joinMessage));
       });
+      updateRoomList();
     } else {
       const errorResponse = {
         type: "error",

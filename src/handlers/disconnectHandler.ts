@@ -1,7 +1,7 @@
 import { WebSocket } from 'ws';
 import { players } from '../db/playerStore.ts';
 import { rooms, availableRooms } from '../db/gameStore.ts';
-import { updateRoomList } from '../utils/rooms.js';
+import { updateRoomList } from '../utils/rooms.ts';
 
 export function handleDisconnect(ws: WebSocket) {
   const player = Array.from(players.values()).find((p) => p.ws === ws);

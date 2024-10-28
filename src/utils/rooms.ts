@@ -77,6 +77,10 @@ export function updateRoomList() {
     data: JSON.stringify(
       availableRooms.map((roomId) => {
         const room = rooms[roomId];
+        if (!room || !room.players) {
+          console.error("Room is missing")
+          return null;
+        }
         return {
           roomId: room.id,
           roomUsers: room.players.map((player) => ({
