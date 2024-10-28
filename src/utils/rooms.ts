@@ -2,6 +2,7 @@ import { WebSocket, WebSocketServer } from 'ws';
 import { availableRooms, rooms } from '../db/gameStore.ts';
 import { WebsocketMessage, Room, Player } from "../types/types.ts";
 import { players } from '../db/playerStore.js';
+import { updateWinnersList } from '../handlers/updateWinnersList.js';
 
 export function startGame(game: Room) {
   const startGameMessage: WebsocketMessage = {
@@ -71,7 +72,7 @@ export function handleRandomAttack(
   ws.send(JSON.stringify(attackResponse));
 }
 
-export function updateRoomList() {
+export function updateRoomList(wss: WebSocketServer) {
   const updateMessage: WebsocketMessage = {
     type: "update_room",
     data: JSON.stringify(
@@ -98,4 +99,5 @@ export function updateRoomList() {
       player.ws.send(JSON.stringify(updateMessage));
     }
   });
+  updateWinnersList(wss)
 }

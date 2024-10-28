@@ -10,14 +10,14 @@ export function handleConnection(ws: WebSocket, wss: WebSocketServer) {
     const parsedMessage: WebsocketMessage = JSON.parse(message.toString());
     const { type } = parsedMessage;
 
-    if (type === "reg") handlePlayerMessage(ws, parsedMessage);
-    else if (type === "create_room" || type === "add_user_to_room") handleRoomMessage(ws, parsedMessage);
+    if (type === "reg") handlePlayerMessage(ws, parsedMessage, wss);
+    else if (type === "create_room" || type === "add_user_to_room") handleRoomMessage(ws, parsedMessage, wss);
     else if (type === "add_ships" || type === "attack" || type === "randomAttack") handleGameMessage(ws, parsedMessage, wss);
   });
 
-  ws.on('close', () => handleDisconnect(ws));
+  ws.on('close', () => handleDisconnect(ws, wss));
   ws.on('error', (error) => {
     console.error("WebSocket error:", error);
-    handleDisconnect(ws);
+    handleDisconnect(ws, wss);
   });
 }

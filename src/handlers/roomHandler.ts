@@ -1,11 +1,11 @@
-import { WebSocket } from "ws";
+import { WebSocket, WebSocketServer } from 'ws';
 import { rooms, availableRooms } from "../db/gameStore.ts";
 import { generateId } from "../utils/generateId.ts";
 import { WebsocketMessage, Room, Player } from "../types/types.ts";
 import { updateRoomList } from "../utils/rooms.ts";
 import { players } from '../db/playerStore.ts';
 
-export function handleRoomMessage(ws: WebSocket, message: WebsocketMessage) {
+export function handleRoomMessage(ws: WebSocket, message: WebsocketMessage, wss: WebSocketServer) {
   const data = message.data ? JSON.parse(message.data) : {};
   const { name, password } = data;
 
@@ -38,7 +38,7 @@ export function handleRoomMessage(ws: WebSocket, message: WebsocketMessage) {
     };
     ws.send(JSON.stringify(response));
 
-    updateRoomList();
+    updateRoomList(wss);
   } else if (message.type === "add_user_to_room") {
     const roomId = data.indexRoom;
     const room = rooms[roomId];
@@ -61,7 +61,7 @@ export function handleRoomMessage(ws: WebSocket, message: WebsocketMessage) {
         };
         player.ws.send(JSON.stringify(joinMessage));
       });
-      updateRoomList();
+      updateRoomList(wss);
     } else {
       const errorResponse = {
         type: "error",

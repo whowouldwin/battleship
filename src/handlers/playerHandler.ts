@@ -1,10 +1,10 @@
-import { WebSocket } from "ws";
+import { WebSocket, WebSocketServer } from 'ws';
 import { players } from "../db/playerStore.ts";
 import { generateId } from "../utils/generateId.ts";
 import { WebsocketMessage, Player } from "../types/types.ts";
 import { updateRoomList } from '../utils/rooms.js';
 
-export function handlePlayerMessage(ws: WebSocket, message: WebsocketMessage) {
+export function handlePlayerMessage(ws: WebSocket, message: WebsocketMessage, wss: WebSocketServer) {
   const rawData = message.data === "string" ? JSON.parse(message.data) : message.data;
   const data = typeof rawData === "string" ? JSON.parse(rawData) : rawData;
   const { name, password } = data;
@@ -36,5 +36,5 @@ export function handlePlayerMessage(ws: WebSocket, message: WebsocketMessage) {
   }
 
   ws.send(JSON.stringify(response));
-  updateRoomList();
+  updateRoomList(wss);
 }
