@@ -5,19 +5,17 @@ import { players } from '../db/playerStore.js';
 import { updateWinnersList } from '../handlers/updateWinnersList.js';
 
 export function startGame(game: Room) {
-  const startGameMessage: WebsocketMessage = {
-    type: "start_game",
-    data: JSON.stringify({
-      ships: game.players[0].ships,
-      currentPlayerIndex: game.players[0].id,
-    }),
-    id: 0,
-  };
-
   game.gameStarted = true;
 
   game.players.forEach((player) => {
-    player.ws.send(JSON.stringify(startGameMessage));
+    player.ws.send(JSON.stringify({
+      type: "start_game",
+      data: JSON.stringify({
+        ships: player.ships,
+        currentPlayerIndex: game.players[0].id,
+      }),
+      id: 0,
+    }));
   });
 }
 
@@ -37,41 +35,37 @@ export function handleAttack(
 
   if (!currentPlayer || !opponent) return;
 
+
+  const isHit = opponent.ships?.some(ship =>
+    ship.position.x === x && ship.position.y === y
+  );
+
+  const attackStatus = isHit ? "hit" : "miss";
   const attackResponse: WebsocketMessage = {
     type: "attack",
     data: JSON.stringify({
       position: { x, y },
       currentPlayer: playerId,
-      status: "miss",
+      status: attackStatus,
     }),
     id: 0,
   };
 
+
   ws.send(JSON.stringify(attackResponse));
-}
+  opponent.ws.send(JSON.stringify(attackResponse));
 
-export function handleRandomAttack(
-  ws: WebSocket,
-  gameId: string,
-  playerId: string,
-  wss: WebSocketServer
-) {
-  const game = rooms[gameId];
-  if (!game) return;
 
-  const attackResponse: WebsocketMessage = {
-    type: "attack",
-    data: JSON.stringify({
-      position: { x: Math.floor(Math.random() * 10), y: Math.floor(Math.random() * 10) },
-      currentPlayer: playerId,
-      status: "shot",
-    }),
+  const turnMessage: WebsocketMessage = {
+    type: "turn",
+    data: JSON.stringify({ currentPlayer: opponent.id }),
     id: 0,
   };
 
-  ws.send(JSON.stringify(attackResponse));
-}
+  ws.send(JSON.stringify(turnMessage));
+  opponent.ws.send(JSON.stringify(turnMessage));
 
+}
 export function updateRoomList(wss: WebSocketServer) {
   const updateMessage: WebsocketMessage = {
     type: "update_room",
@@ -99,5 +93,5 @@ export function updateRoomList(wss: WebSocketServer) {
       player.ws.send(JSON.stringify(updateMessage));
     }
   });
-  updateWinnersList(wss)
 }
+

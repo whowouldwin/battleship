@@ -3,6 +3,7 @@ import { players } from "../db/playerStore.ts";
 import { generateId } from "../utils/generateId.ts";
 import { WebsocketMessage, Player } from "../types/types.ts";
 import { updateRoomList } from '../utils/rooms.js';
+import { updateWinnersList } from './updateWinnersList.js';
 
 export function handlePlayerMessage(ws: WebSocket, message: WebsocketMessage, wss: WebSocketServer) {
   const rawData = message.data === "string" ? JSON.parse(message.data) : message.data;
@@ -37,4 +38,5 @@ export function handlePlayerMessage(ws: WebSocket, message: WebsocketMessage, ws
 
   ws.send(JSON.stringify(response));
   updateRoomList(wss);
+  updateWinnersList(wss);
 }
